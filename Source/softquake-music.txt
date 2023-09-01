@@ -1,0 +1,38 @@
+SoftQuake 2023
+
+This takes has been taken almost verbatim from QuakeSpasm-Music.txt
+Version 0.94.2
+
+When writing the CD audio emulation, I used their codebase as a reference.
+As a result, the implementation and functionality is similar, but not exact.
+
+SoftQuake (and QuakeSpasm) supports ogg, mp3 and wav external music files to be played
+instead of cd music. What you should do is simple:
+
+1. Use your favorite cd-ripper application and rip your quake cdrom
+   audio tracks, convert them to ogg or mp3 so they occupy less space,
+   like track02.ogg, track03.ogg, etc.
+
+   Note #1: There is no such thing as track01:  the first tracks of
+            original Quake and the mission pack cdroms are always data
+            tracks.
+
+   Note #2: Since the Quake cdrom audio tracks are pre-emphasized, you
+            should de-emphasize them during or after ripping to make
+            them sound right. (thanks to Sander van Dijk for this note)
+
+2. Go into your quake installation directory and create a new directory
+   id1/music (for windows users id1\music).
+
+3. If you have the Scourge of Armagon mission pack, then create another
+   directory hipnotic/music .  If you have the Dissolution of Eternity
+   then create another directory rogue/music .
+
+4. Take the ripped music files from step1, place them under id1/music.
+   If you have the mission packs, repeat step1 for the mission packs,
+   too, and place the ripped music files under hipnotic/music for the
+   first mission pack or under rogue/music for the second mission pack.
+
+5. All are ready to go: When a level starts, the engine will first try
+   playing the necessary cdaudio track and if it doesn't find the cdrom
+   it will use the ripped music files instead.

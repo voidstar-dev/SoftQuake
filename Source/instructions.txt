@@ -1,0 +1,14 @@
+Ways to play:
+1. Copy the id1 folder into this directory, and start playing!
+
+2. Copy all files in this folder to where your id1 folder is located (not inside it!) and launch the game from there.
+
+3. Use the -basedir command to specify where your id1 folder is located.
+   You can include it in a shell script or shortcut for easy use.
+   Assuming you have this folder structure:
+   
+   /home/<username>/games/quake/id1
+
+   Pass the following argument to the game:
+
+   softquake-sdl.exe -basedir /home/<username>/games/quake

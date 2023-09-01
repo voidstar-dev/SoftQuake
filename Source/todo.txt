@@ -1,0 +1,5 @@
+-- Be aspect ratio correct.
+-- Resizable window (up for debate, just have to uncomment SDL_SetWindowResizable).
+-- Video options menu in glquake.
+-- Screenshots in a modern format. Currently screenshots are saved as .pcx and .tga files respectively for softquake and glquake.
+   Should be easy enough to implement with stb_image, if people request it.

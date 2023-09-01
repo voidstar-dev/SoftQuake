@@ -1,0 +1,472 @@
+SoftQuake 2023
+
+==============================================================
+*** Introduction
+==============================================================
+
+This project started as a desire to play the software rendered version of Quake without relying on dos emulation.
+
+I had 3 key goals when starting out:
+1. Keep the renderer exactly as it was upon release of this code by id.
+2. Create a cross platform port.
+3. No "limit removing". Stay bounded by Quake's original map and heap memory limitations.
+
+1.
+One of the key goals I had was to keep the renderer exactly as it was upon release of this codebase
+by id all of these years ago. This goes double for GLQuake, which as of 2023 has a plethora of source ports
+with various fixes and modifcations. I wanted to experience the visuals as closely as possible to original,
+without any of these changes.
+That said, the source ports certainly appreciated and are invaluable to extending the lifetime of this game,
+and are how I play most of the time today.
+
+PS: I did end up writing a few changes of my own in the GL renderer, but they are optional and off by default.
+See the section 'Modifications to GLQuake'.
+
+2.
+Another goal was to create a cross-platform port without having to write N number of vid_<OS> and in_<OS> files,
+as was necessary in the old days. You can see it for yourself in this very code.
+
+This is where SDL2 really shines.
+
+3.
+Finally, I didn't want to change the memory allocation code and other bits of code to do with memory.
+Truthfully, it seems like a daunting task and the original code works if you stay under the heap size,
+so there wasn't much incentive to go modifying it.
+That said, you can run the game with -mem <heapsize_in_megabytes> and change it that way like so:
+./quake -mem 32
+>> 32.0 megabyte heap
+
+
+
+
+After compling the game with the existing 'vid_x.c' file and getting it to show up on the screen (but being far from playable),
+I started fleshing out the video and input handling code for the SDL2 version.
+
+A few hours later I had a playable version of Quake using the software renderer, but without any audio support.
+
+Audio support and emulated CD audio closely followed.
+Soon I has a satisfactory port that played audio effects, played music, and supported multiple framebuffer resolutions.
+
+From there, I decided to tackle porting GLQuake, which was not something I originally planned on doing, but ended up doing anyway.
+In a few hours GLQuake was up and running. I used 'gl_vidlinuxglx.c' and 'gl_vidnt.c' as a reference.
+Thanks to using SDL2, the input and audio code could be shared, which saved me a bunch of work.
+
+I then added a few personal fixes that I grew to appreciate from playing other source ports, but as a rule,
+they are disabled by default and must be explicitly enabled when compling.
+More on that in the section "Modifications to GLQuake"
+
+That's it for the introduction.
+Below are a list of various notes in no particular order that describe the changes I've made, and other tidbits.
+
+
+==============================================================
+*** Back to 32 bits
+==============================================================
+While the code actually compiles on a 64-bit os using a 64-bit compilation mode,
+there are some sections in the code that deal with pointer arithmetic, and expect 32-bit sized pointers.
+This breaks a bunch of logic that I don't quite understand yet how to fix.
+If you, the reader, know what changes to make, please let me know.
+As of 2023, I believe Apple completely dropped support 32 bit programs on their OS.
+I'm not a mac user in any capacity, so I don't know if there are any workarounds to this.
+Linux and Windows seem to be happy running the 32 bit code.
+
+
+
+==============================================================
+*** Modifications to GLQuake
+==============================================================
+I promised to myself that I wouldn't modify the actual rendering code.
+in order to maintain as much as possible the same look that GLQuake had
+when it was originally released (as source).
+Curiosity got the better of me and I made a few changes.
+However, they are all optional and off by default.
+
+Note: This only applies to GLQuake.
+The software rendered version remains unmodified.
+
+Define the following constants before compiling to enable any combination of these fixes.
+
+------------------------------------
+SOFTQUAKE_GL_LIGHTMAP_FIX
+------------------------------------
+This fixes 'r_lightmap' visualization. Originally, the shades are inverted.
+Maybe there's a historical reason for this (hardware was better at blending inverted colors?)
+Or perhaps it's a simple oversight, who knows.
+
+I also added lightmap visualization when multitexturing is enabled.
+It was never actually implemented in the original codebase.
+
+
+------------------------------------
+SOFTQUAKE_GL_TEXTUREMODE_FIX
+------------------------------------
+*************************************************
+                    IMPORTANT
+*************************************************
+* GLQuake leaks memory when allocating textures.
+* The culprit is GL_LoadTexture in 'gl_draw.c'.
+* This is fine for short sessions, but if you're
+* constantly reloading maps, you'll run into issues.
+* You'll want to include 'gl_texmgr.c' in your
+* compilation (not 'gl_texmgr_null.c') to remedy this.
+*
+* The SOFTQUAKE_GL_TEXTUREMODE_FIX only affects
+* gl_texturemode behaviour.
+* The memory leak fix is always enabled.
+*
+* Ps: To be fair, no "memory" is actually leaked by the game.
+* The core issue is that by calling glBindTexture
+* with an ever increasing texture id, the driver
+* is forced to allocate new handles due to how
+* the OpenGL spec is specified.
+* Maybe this wasn't an issue back then.
+*************************************************
+
+The actual change:
+As programmed originally, the engine will only update its texture mode upon loading a new level.
+This is different from what many of us are used to in more modern source ports,
+where gl_texturemode changes happen immediately.
+This fix does just that, and allows you to see gl_texturemode as soon as you apply the command.
+In addition, this fix applies the filter mode to ALL objects in the game
+The original engine overlooks some models (such as torches and the player viewmodel).
+
+'gl_texturemode' controls the texture filtering used by OpenGL for rendering the world and models.
+'gl_texturemode gl_nearest' will give you the closest look to the software version.
+'gl_texturemode gl_linear' will perform bilinear filtering. Due to the relatively low res textures it will be blurry, but some people prefer that look.
+
+Other combinations:
+gl_texturemode gl_nearest_mipmap_nearest
+gl_texturemode gl_nearest_mipmap_linear
+gl_texturemode gl_linear_mipmap_nearest
+gl_texturemode gl_linear_mipmap_linear
+
+Just to note, I've deliberately disabled filtering on UI elements and text, which brings us to the next define.
+
+
+------------------------------------
+SOFTQUAKE_GL_OVERRIDE_TEXTURE_PREF
+------------------------------------
+Personally I don't like texture filtering on the UI elements, so I hardcoded them to always use nearest filtering
+If you want to change it, define this and modify the preferences to your liking.
+See 'gl_texmgr.h' and look for the TEX_PREF defines.
+
+
+------------------------------------
+SOFTQUAKE_GL_CLEARCOLOR_FIX
+------------------------------------
+Implements the r_clearcolor functionality that's originally present in the software renderer.
+Without this, glClearColor is set to an unsightly red, which makes noclipping an eyesore.
+
+** Special note **
+See 'glqnotes.txt' for a better explanation on gl_keeptjunctions
+
+Without this fix, the following combination of cvars produces small red pixels at some vertex boundaries:
+'gl_clear 1'
+'gl_keeptjunctions 0'
+
+To remedy this:
+'gl_clear 0'
+'gl_keeptjunctions 0'
+
+or
+'gl_keeptjunctions 1'
+
+You will need to reload the map to see the effect of gl_keeptjunctions
+
+No matter what, disabling gl_keeptjunctions will still produce artifacts
+They'll just be more or less noticable depending on the clearcolor mode used
+Set gl_keeptjunctions 1 to really fix this issue
+
+
+------------------------------------
+SOFTQUAKE_GL_UI_SCALING_FIX
+------------------------------------
+Introduces the ui_scale cvar.
+This enables you to scale the UI. At the moment, all UI elements are affected
+This includes the statusbar, menu, and console.
+The reference scale is 640x480.
+A scale greater than 1 makes the UI appear larger.
+A scale smaller than 1 makes the UI appear smaller.
+
+
+==============================================================
+*** Other GLQuake changes
+==============================================================
+gl_clear           -- This is now archived.
+gl_flashblend      -- This is now archived.
+r_shadows          -- This is now archived.
+gl_zfix            -- Borrowed gl_zfix from Quakespasm. This fixes z-fighting on some surfaces.
+r_speeds           -- No longer uses glFinish. Set the gl_finish cvar to 1 instead if you want this behaviour.
+
+
+==============================================================
+*** Unicode Support
+==============================================================
+Unicode support is not implemented correctly, or at all.
+At the moment, the game uses the physical locations of the keys for its keybindings.
+On one hand, this means that you can use the same keybindings no matter what your language layout is.
+On the other hand, this breaks text input (for console, chat, and other things I've overlooked)
+since only English characters are translated.
+See 'in_sdl.c' for the implementation.
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+*** Overall engine changes ***
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+==============================================================
+*** New cvars
+==============================================================
+sv_altnoclip       -- Borrowed sv_altnoclip from Quakespasm.
+                   -- This allows mouselook to be used for steering when noclipping, similar to Half-Life and Source Engine games.
+                   -- Usage: sv_altnoclip <0, 1>
+
+vid_vsync          -- Enable or disable vsync. The game framerate is still capped at 72 FPS.
+                   -- Usage: vid_vsync <0, 1>
+
+vid_fullscreen     -- Toggles use of a fullscreen window.
+                   -- Requires 'vid_restart' to take effect
+                   -- Usage: vid_fullscreen <0, 1>
+
+vid_desktopfullscreen 
+                   -- When enabled, and vid_fullscreen is also enabled, uses borderless fullscreen mode.
+                   -- Requires 'vid_restart' to take effect
+                   -- Usage: vid_desktopfullscreen <0, 1>
+
+vid_colormod       -- Software renderer only. Allows you to modulate the rendered frame by an rgb color.
+                   -- Nice for adding a bit of mood to the look of the software renderer.
+                   -- The rgb values can be larger than 1.
+                   -- Store this cvar in your autoexec.cfg to preserve it across play sessions.
+                   -- Usage: vid_colormod <rgb>. Example: vid_colormod 1 0 0
+
+in_grabmouse       -- Forces the mouse to always be captured by the game, regardless of video mode.
+                   -- By default, whenever you're in windowed mode, the mouse is released if you use the main menu or the console.
+                   -- Usage: in_grabmouse <0, 1>
+
+ui_scale           -- Scale the UI. Larger numbers mean a bigger UI, up to a point. 
+                   -- Must have compiled with SOFTQUAKE_GL_UI_SCALING_FIX defined. GLQuake only.
+                   -- Usage: ui_scale <scale>. Example: ui_scale 2
+
+cl_quitmessage     -- Toggles the type of quit message displayed before exiting the game
+                      0: Default WinQuake message with the credits.
+                      1: DOS quit message.
+                   -- Usage: cl_quitmessage <0, 1>.
+
+
+==============================================================
+*** New commands
+==============================================================
+fb_mode            -- Software renderer only. Choose the framebuffer resolution. Defaults to 320x200.
+                   -- The base resolution is simply multiplied by the mode number. (ex: 640x400 at fb_mode 2)
+                   -- This could be expanded in the future to support a wider range of scales.
+                   -- Usage: fb_mode <1, 2, 3>
+
+vid_restart        -- Apply the following changes:
+                      vid_fullscreen
+                      vid_desktopfullscreen
+                      vid_width
+                      vid_height
+                   -- Usage: vid_restart
+
+sw_backend         -- Software renderer only. Choose the rendering method to display the frame.
+                   -- Requires a full restart of the game to take effect.
+
+                   -- 'sdl' is the universal solution, runs everywhere that SDL2 is supported, but it's slower.
+				       With low framebuffer resolutions, the speed difference is negligible and I wouldn't worry about it.
+					   However, as you increase the framebuffer resolution, the performance hit starts to add up.
+
+				   -- 'ogl' uses OpenGL. Optionally, it uses a fragment shader to convert the palette indices in the framebuffer
+				      to RGBA pixels. Significantly faster due to the lower memory size of the texture, 
+				      and the palette conversion taking place on the GPU.
+				      Specify '-noglsl' on the command line to disable glsl support.
+				      Without glsl, OpenGL is about the same speed as the default SDL2 backend.
+
+                   -- Usage: sw_backend <sdl, ogl> Example: sw_backend sdl
+
+
+==============================================================
+*** Video option screen (Software renderer only for now)
+==============================================================
+Video mode         -- Resolution of the window
+
+Display mode       -- How the window is displayed
+		              Borderless: Uses the existing desktop resolution for a fullscreen window regardless of 'video mode'.
+		              Fullscreen: Changes the desktop to the resolution specified by 'video mode', and makes the window fullscreen.
+		              Windowed: Changes the window size to the resolution specified by 'video mode'. Leaves desktop resolution intact.
+
+Vsync              -- Vertical sync. See 'vid_vsync'.
+
+Framebuffer mode   -- Resolution of the framebuffer that Quake draws into. See 'fb_mode'.
+
+Test               -- Test the selected settings for 5 seconds. Has no effect if the settings haven't changed.
+
+Apply              -- Apply the selected settings. You can also apply the settings during the "Test" time interval.
+
+
+Note: When using 'windowed mode', you can manually set your window dimensions by using vid_width and vid_height in the console, respectively.
+Example: vid_width 1000; vid_height 1000; vid_restart
+
+Note2: GLQuake lacks a video option screen, for now. You can get much of the same functionality by using the console commands.
+I apologise for the inconvenience for the time being.
+
+
+==============================================================
+*** Emulated CD Audio
+==============================================================
+Tracks can now be loaded by placing them in <gamedir>/music, where <gamedir> is your game/mod directory
+Exmaple: id1/music
+This is similar to how most modern source ports handle things.
+
+Music is searched for in the following way:
+Whenever you use a mod, music files will first be searched in <gamedir>/music.
+If none can be found, id1/music is used as a fallback.
+Failing that, no music is played.
+
+The base game always uses id1/music as its music directory.
+
+Formats:
+SDL2_mixer is used as the CD audio backend (all other game sound is handled by SDL2's default audio interface)
+Currently supported audio formats:
+    mp3
+    ogg
+    flac
+    wav
+
+SDL2_mixer actually supports a much wider range of formats, and there's no reason why support for more can't be added.
+This is just what I've chosen to include.
+
+This will also depend on how SDL2_mixer was compiled on your machine.
+If it wasn't compiled with mp3 support, for example, then no runtime mp3 support will be available.
+However, this can easily be remedied by changing the shared library that the game uses.
+No recompilation is neeed in this case.
+
+I've included the source for SDL2_mixer 2.7.0 with this release,
+so you can compile you own configuration.
+
+See 'cd_sdl.c' for the implementation.
+
+
+Note: Physical CD audio support has not been included, you will have to rip the audio tracks.
+See 'softquake-music.txt' for some guidelines on how you might do this.
+
+
+==============================================================
+*** Exhaustive list of command line parameters
+==============================================================
+Todo
+
+==============================================================
+*** Source port recommendations
+==============================================================
+Quakespasm and vkQuake:
+  Quakespasm is pretty great for a vanilla-like experience with many quality-of-life features added. My personal go-to.
+  vkQuake is a Quakespasm fork which greatly improves rendering performance by replacing OpenGL with Vulkan.
+
+Mark V:
+  If you want a cross-platform port of WinQuake and GLQuake with some engine improvements, this is the one to play.
+  However, I couldn't get audio to work on Linux :(
+
+JoeQuake:
+  I have not had much experience playing this one, but it's widely used by speedrunners.
+
+Darkplaces:
+  A highly modified GLQuake derivative. People have really done some great things with it regarding visuals.
+  For instance, Wrath: Aeon of Ruin uses a fork of this engine.
+  If you're going to be playing with stock visual settings, I'd pick one of the other ports.
+  However, if you're into visual mods, there's a wide selection of them available just for this engine.
+
+DOSBox:
+  Not a source-port per-se, but a way to play the original game on modern OS's.
+  Without it, I wouldn't have re-discovered Quake later on in life, so my thanks goes out to the developers.
+  Highly recommended for a first playthrough at 320x200 :) Remember +mlook in the console!
+
+Others:
+  There's no way I've covered all of the ports that have existed over the years, these are just the ones I have personal experience with.
+  Sorry if I missed your favourite port!
+
+
+==============================================================
+*** Troubleshooting
+==============================================================
+  Q: I got the following error message
+     Hunk_HighAlloc: failed on <N> bytes
+     QUAKE ERROR: Not enough memory for video mode
+
+  A: Your video resolution (or mod) used more memory than Quake's default amount.
+     You need to let Quake allocate more memory at startup.
+     Run quake with the following parameter:
+	 ./quake -mem <megabytes_of_memory>
+	 As an example
+	 ./quake -mem 64
+	 You can replace 64 with any number
+
+
+==============================================================
+*** Porting tips
+==============================================================
+The original developers of Quake had the foresight to include "null" drivers for many of the subsystems.
+If you just want to see if the code compiles on your machine,
+replace any existing subsystem with its null counterpart:
+
+cd_null.c
+in_null.c
+snd_null.c -- Replace all snd_* files with this one
+sys_null.c
+vid_null.c
+
+net_none.c -- Replace all net_* files with this one
+
+x86 ASM:
+Because the original Quake expected x86 specific assembly files, some of the code won't compile on a newer OS,
+or on a non x86 cpu.
+To remedy this:
+1. compile with 'nonintel.c'
+2. Go to 'quakedef.h' and set the id386 define to 0
+3. Optionally, also define id386=0 in your compiler.
+
+For porting GLQuake, don't forget to define GLQUAKE in your compiler flags
+
+If you are porting to a Windows target, you will need to define SOFTQUAKE_COMPAT
+
+
+Q: How do I know which source files to use?
+Honestly when I started this I did it in the dumbest possible way,
+and that was to simply compile (not link!) each file 1 by 1 and look for errors.
+After the object files were compiled, I'd link and look for any duplicate symbol errors.
+That way it was relatively easy to figure out if I should be using
+a particular file for a software build or a GL build.
+
+You can use my makefiles as a starting point,
+I've clearly labeled which sources are software-only, gl-only, or shared.
+If you prefer, you can then prefix the software source files with sw_, similar to how the gl files are done.
+
+Lastly, remember to compile in 32-bit mode.
+In compilers that accept gcc style flags, this can be done with the '-m32' flag
+Note that you will need to link 32-bit libraries.
+I haven't tried with Windows' cl, or others.
+
+
+==============================================================
+*** Final notes
+==============================================================
+Other changes are documented in the source code and aren't really important for gameplay
+
+
+==============================================================
+*** Thanks
+==============================================================
+id Software
+  For this awesome game, and subsequent source code release.
+
+Quakespasm developers
+  Your codebase has been an invaluable reference, and some of it has made it to this port.
+  All credits are included.
+
+SDL/SDL2 developers
+  For making writing cross-platform code a whole lot easier.
+
+Authors of vid_x.c, vid_winnt.c, gl_vidlinuxglx.c, gl_vidnt.c
+  Wherever you are, thanks for giving me a starting point when beginning the SDL2 port.
+
+
+Enjoy this port! -- Softquake Developer

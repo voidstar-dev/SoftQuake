@@ -1,0 +1,17 @@
+Source/bin/*
+Source/build/*
+Source/lbuild/*
+Source/wbuild/*
+Source/id1/*
+Source/thirdparty/SDL2_mixer/src/*.dll
+Source/thirdparty/SDL2_mixer/src/*.lib
+Source/thirdparty/SDL2_mixer/src/*.so
+Source/thirdparty/SDL2_mixer/src/*.so.*
+Source/thirdparty/SDL2_mixer/src/*.o
+Source/cpy-win32.sh
+Source/patchtool
+Source/vertool
+Source/current
+Source/.lastpatch.txt
+Source/.patchnotes.txt
+Release/*

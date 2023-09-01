@@ -1,0 +1,2 @@
+vertool: vertool.c softquake_version.h softquake_version.c
+	gcc vertool.c -o vertool
