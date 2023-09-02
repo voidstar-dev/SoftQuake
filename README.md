@@ -16,7 +16,7 @@ It's not the primary focus of this project, but it's there if you want it.
 For more info, please read [softquake-notes.txt](Source/softquake-notes.txt)
 
 ## Quick Start
-There are pre-compiled binaries available in the [Release]() section.
+There are pre-compiled binaries available in the [Release](https://github.com/voidstar-dev/SoftQuake/releases) section.
 
 Just pick the OS that suits you, and download.
 
@@ -126,6 +126,8 @@ This is by no means an exhaustive list, feel free to file an issue.
 Todo: Formalise bug reports (use Github for now)
 
 There are probably bugs.
+
+https://github.com/voidstar-dev/SoftQuake/issues
 
 ## Other platforms
 I can only program for and test on platforms and operating systems that I actually have access to.

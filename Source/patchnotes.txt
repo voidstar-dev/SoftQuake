@@ -11,7 +11,7 @@
 
 * For those that want to compile from source, refer to the README.md file in the root directory.
 
-* Please file bugs to <github repo>
+* Please file bugs to https://github.com/voidstar-dev/SoftQuake/issues
   Although I've done my best to ensure that launching the game is as effortless as possible,
   there's no way that I could have covered all OS configurations.
   If you encounter an issue with launching the game, please let me know!
