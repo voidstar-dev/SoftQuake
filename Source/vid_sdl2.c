@@ -1809,6 +1809,7 @@ static void VID_ApplyOptions(void)
 	Cbuf_AddText(va("vid_bpp %d\n", VID_SDL2GetBPP(desired_disp_mode)));
 
 	Cvar_SetValueQuick(&fb_mode, fb_mode_index);
+	Cbuf_AddText(va("fb_mode %d\n", fb_mode_index));
 
 	// Should be last
 	Cbuf_AddText("vid_restart\n");

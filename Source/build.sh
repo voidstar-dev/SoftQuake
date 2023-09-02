@@ -7,8 +7,8 @@ meson compile -C lbuild || exit
 
 if [ "$1" = "run" ]; then
 	cd lbuild
-	./glquake-sdl -basedir ../
-	# ./softquake-sdl -basedir ../
+	# ./glquake-sdl -basedir ../
+	./softquake-sdl -basedir ../
 	exit
 fi
 
