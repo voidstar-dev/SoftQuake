@@ -66,7 +66,7 @@ provided you have i686-w64-mingw32-gcc installed (you won't need MSYS2)*
 
 ### Windows
 1. Navigate to `Source`
-2. Run `./build-cross_win32.sh` (this script accepts command line arguments just like `make`)
+2. Run `./build-cross-win32.sh` (this script accepts command line arguments just like `make`)
 3. The final output will be in the `bin` directory
 
 
