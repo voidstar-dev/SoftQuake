@@ -44,7 +44,7 @@ typedef struct
 
 static snd_config_t snd_config =
 {
-	11050,
+	11025,
 	2,
 	AUDIO_S16SYS,
 };
@@ -159,7 +159,7 @@ static void SND_InitConfig(void)
 {
 #if 0
 	-sndspeed <speed>
-	Set sound speed.  Usual values are 8000, 11025, 22051 and 44100.
+	Set sound speed.  Usual values are 8000, 11025, 22050 and 44100.
 	Default is 11025.
 
 	-sndmono
@@ -205,7 +205,7 @@ qboolean SNDDMA_Init()
 
 	if(SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
 	{
-			Con_Printf("Could not initialize sound subsystem: %s\n", SDL_GetError());
+		Con_Printf("Could not initialize sound subsystem: %s\n", SDL_GetError());
 		return 0;
 	}
 
@@ -234,7 +234,7 @@ qboolean SNDDMA_Init()
 		SDL_AudioSpec DesiredSpec = {0};
 		SDL_AudioSpec ObtainedSpec = {0};
 
-		assert(shm->samplebits == 16 || shm->samplebits == 8);
+		q_assert(shm->samplebits == 16 || shm->samplebits == 8);
 		DesiredSpec.freq = shm->speed;
 		DesiredSpec.format = snd_config.format;
 		DesiredSpec.channels = shm->channels;
@@ -242,7 +242,7 @@ qboolean SNDDMA_Init()
 
 
 		// DesiredSpec.samples = 256; // This HAS to be 256. Any higher and we get audio dropouts/latency.
-		// Only true if we use the default 11050 sample rate
+		// Only true if we use the default 11025 sample rate
 
 		// From Quakespasm
 		if (DesiredSpec.freq <= 11025)

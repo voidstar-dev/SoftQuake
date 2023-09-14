@@ -675,3 +675,13 @@ qboolean VID_IsMinimized(void)
 {
 	return !(SDL_GetWindowFlags(ctx.Window) & SDL_WINDOW_SHOWN);
 }
+
+void VID_LockVariables()
+{
+	// Stub
+}
+
+void VID_UnlockVariables()
+{
+	// Stub
+}

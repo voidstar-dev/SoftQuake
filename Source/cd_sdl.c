@@ -272,7 +272,7 @@ int CDAudio_Init(void)
 	}
 
 	// Todo: Audio format and frequency from shm (snd_sdl.c)
-	if(Mix_OpenAudio(22100/2, AUDIO_S16SYS, 2, 512) != 0)
+	if(Mix_OpenAudio(22050/2, AUDIO_S16SYS, 2, 512) != 0)
 	{
 		Con_Printf("Could not open CD Audio Mixer: %s\n", SDL_GetError());
 		CDAudio_ShutdownLocal();

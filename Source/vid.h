@@ -94,3 +94,9 @@ qboolean VID_IsMinimized(void);
 
 void VID_ToggleFullscreen(void);
 // Toggles between fullscreen and windowed modes
+
+void VID_LockVariables(void);
+// Locks vid cvars for readonly access
+
+void VID_UnlockVariables(void);
+// Unlocks vid cvars for writing

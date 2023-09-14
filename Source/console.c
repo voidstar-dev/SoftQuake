@@ -408,7 +408,10 @@ void Con_Printf (char *fmt, ...)
 		if (!inupdate)
 		{
 			inupdate = true;
+
+			// softquake -- Comment this out to disable frame updates during console rendering. Updating the screen will happen anyway.
 			SCR_UpdateScreen ();
+
 			inupdate = false;
 		}
 	}

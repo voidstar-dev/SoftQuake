@@ -917,10 +917,13 @@ void Host_Init (quakeparms_t *parms)
 #endif
 	}
 
+	// softquake -- Lock vid cvars 'before' executing quake.c
+	VID_LockVariables();
+
 	Cbuf_InsertText ("exec quake.rc\n");
 
 	// softquake -- Unlock vid cvars 'after' executing quake.c
-	Cbuf_InsertText("vid_unlock\n");
+	VID_UnlockVariables();
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = Hunk_LowMark ();

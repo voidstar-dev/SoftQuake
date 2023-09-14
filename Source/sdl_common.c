@@ -67,10 +67,11 @@ void SW_Backend_f(void)
 	}
 	else
 	{
-		Con_Printf("sw_backend is \"%s\"\n", sw_backend.string);
 		Con_Printf("Possible options:\n");
 		Con_Printf("sdl    Use SDL2 to display the image\n");
 		Con_Printf("ogl    Use OpenGL to display the image\n");
+
+		Con_Printf("sw_backend is \"%s\"\n", sw_backend.string);
 	}
 }
 

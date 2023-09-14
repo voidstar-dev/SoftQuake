@@ -694,7 +694,7 @@ SDL_DisplayMode *VID_GetCurrentDisplayMode(void)
 	return &Mode;
 }
 
-static void VID_LockVariables(void)
+void VID_LockVariables(void)
 {
 	Cvar_LockVariable(&vid_width);
 	Cvar_LockVariable(&vid_height);
@@ -708,12 +708,6 @@ void VID_UnlockVariables(void)
 	Cvar_UnlockVariable(&vid_height);
 	Cvar_UnlockVariable(&vid_refreshrate);
 	Cvar_UnlockVariable(&vid_bpp);
-}
-
-void VID_Unlock_f(void)
-{
-	// Unlocks variables for writing after Host_Init executes "exec quake.rc"
-	VID_UnlockVariables();
 }
 
 void VID_Restart(void)
@@ -919,8 +913,6 @@ void VID_Restart(void)
 	// If these cvars aren't set, then it allows for toggling between windowed and fullscreen modes with Alt-Enter
 	// Cvar_SetValueQuick(&vid_width, vid_client_width);
 	// Cvar_SetValueQuick(&vid_height, vid_client_height);
-
-	VID_LockVariables();
 }
 
 static void VID_ShutdownQuakeFramebuffer(void)
@@ -1073,8 +1065,6 @@ void VID_Init(unsigned char *palette)
 	Cmd_AddCommand("vid_restart", VID_Restart_f);
 
 	Cmd_AddCommand("vid_colormod", VID_ColorMod_f);
-
-	Cmd_AddCommand("vid_unlock", VID_Unlock_f);
 
 	// Todo: Get rid of this. Temp code
 	Cmd_AddCommand("sdl_mode", VID_SDLMode_f);
@@ -1777,8 +1767,6 @@ static void VID_ApplyOptions(void)
 	SDL_DisplayMode *desired_disp_mode = &vid_modes[vid_mode_index];
 	SDL_DisplayMode *cur_disp_mode = 0;
 
-	VID_UnlockVariables();
-
 	Cbuf_AddText(va("vid_width %d\n", desired_disp_mode->w));
 	Cbuf_AddText(va("vid_height %d\n", desired_disp_mode->h));
 
@@ -1808,7 +1796,7 @@ static void VID_ApplyOptions(void)
 	Cbuf_AddText(va("vid_refreshrate %d\n", desired_disp_mode->refresh_rate));
 	Cbuf_AddText(va("vid_bpp %d\n", VID_SDL2GetBPP(desired_disp_mode)));
 
-	Cvar_SetValueQuick(&fb_mode, fb_mode_index);
+	// Fb mode
 	Cbuf_AddText(va("fb_mode %d\n", fb_mode_index));
 
 	// Should be last
@@ -1821,12 +1809,8 @@ static void VID_ApplyOptions(void)
 	// Update refresh rate and bpp after vid_restart, because the monitor might not match the game settings
 	cur_disp_mode = VID_GetCurrentDisplayMode();
 
-	VID_UnlockVariables();
-
 	Cvar_SetValueQuick(&vid_refreshrate, cur_disp_mode->refresh_rate);
 	Cvar_SetValueQuick(&vid_bpp, VID_SDL2GetBPP(cur_disp_mode));
-
-	VID_LockVariables();
 }
 
 
@@ -1932,8 +1916,6 @@ static void VID_SyncVideoOptions(void)
 	modestate_t screen_mode = MS_WINDOWED;
 	vo.mode_invalid = false;
 
-	VID_UnlockVariables();
-
 	// Todo: We should probably rely on SDL2 for the window settings,
 	// rather than our cached variables
 	SetStateIndexDefault(VID_OPT_FB_MODE, (int)fb_mode.value);
@@ -2004,8 +1986,6 @@ static void VID_SyncVideoOptions(void)
 		vid_mode_count = valid_mode_count;
 		SetStateIndexDefault(VID_OPT_VIDMODE, current_mode_index);
 	}
-
-	VID_LockVariables();
 }
 
 void VID_MenuInit(void)
