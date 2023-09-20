@@ -583,37 +583,10 @@ typedef struct _TargaHeader {
 	unsigned char	pixel_size, attributes;
 } TargaHeader;
 
-
-/* 
-================== 
-SCR_ScreenShot_f
-================== 
-*/  
-void SCR_ScreenShot_f (void) 
+void WriteTGAfile(char *filename)
 {
-	byte		*buffer;
-	char		pcxname[80]; 
-	char		checkname[MAX_OSPATH];
-	int			i, c, temp;
-// 
-// find a file name to save it to 
-// 
-	strcpy(pcxname,"quake00.tga");
-		
-	for (i=0 ; i<=99 ; i++) 
-	{ 
-		pcxname[5] = i/10 + '0'; 
-		pcxname[6] = i%10 + '0'; 
-		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
-		if (Sys_FileTime(checkname) == -1)
-			break;	// file doesn't exist
-	} 
-	if (i==100) 
-	{
-		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n"); 
-		return;
- 	}
-
+	byte *buffer;
+	int i, c, temp;
 
 	buffer = malloc(glwidth*glheight*3 + 18);
 	memset (buffer, 0, 18);
@@ -634,10 +607,111 @@ void SCR_ScreenShot_f (void)
 		buffer[i] = buffer[i+2];
 		buffer[i+2] = temp;
 	}
-	COM_WriteFile (pcxname, buffer, glwidth*glheight*3 + 18 );
+	COM_WriteFile (filename, buffer, glwidth*glheight*3 + 18 );
 
 	free (buffer);
-	Con_Printf ("Wrote %s\n", pcxname);
+	Con_Printf ("Wrote %s\n", filename);
+}
+
+#ifdef SOFTQUAKE_ENABLE_PNG
+#define SCREENSHOT_EXT "png"
+#define SCREENSHOT_ERROR_STRING "SCR_ScreenShot_f: Couldn't create a PNG file\n"
+
+static void WritePNGfile(char *filename)
+{
+	int width = glwidth;
+	int height = glheight;
+	int channels = 3;
+	int image_bytes = width * height * channels;
+	unsigned char *raw_data = 0;
+
+	raw_data = malloc(image_bytes);
+	q_assert(raw_data);
+
+	glReadPixels(glx, gly, width, height, GL_RGB, GL_UNSIGNED_BYTE, raw_data);
+
+	// From stb_image.h, stbi__bmp_load
+	// Vertically flip an image in place
+	// glReadPixels reads from the bottom-left of the screen, so we must flip the image
+	// There might be a faster way to do this
+#if 1
+	{
+		int j;
+		unsigned char tmp;
+		int img_x = width;
+		int img_y = height;
+		int target = channels;
+		for(j = 0; j < height / 2; j++)
+		{
+			int i;
+			int i1 = j * img_x * target;
+			int i2 = (img_y - 1 - j) * img_x * target;
+			unsigned char *p1 = &raw_data[i1];
+			unsigned char *p2 = &raw_data[i2];
+			for(i = 0; i < img_x * target; i++)
+			{
+				tmp = p1[i];
+				p1[i] = p2[i];
+				p2[i] = tmp;
+			}
+		}
+	}
+#else
+	{
+		// Adapted from Quakespam image.c, CopyFlipped
+		// Might be faster, but uses double the memory
+		int stride_in_bytes = width * channels;
+		int i;
+		unsigned char *flipped = 0;
+
+		flipped = malloc(image_bytes);
+		q_assert(flipped);
+		for(i = 0; i < height; i++)
+		{
+			unsigned char *dst = &flipped[i * stride_in_bytes];
+			const unsigned char *src = &raw_data[(height - 1 - i) * stride_in_bytes];
+			memcpy(dst, src, stride_in_bytes);
+		}
+		// Swap pointers
+		unsigned char *tmp = raw_data;
+		raw_data = flipped;
+		free(tmp);
+	}
+#endif
+	// Turns out stb_image_write supports flipping on write. It'll be false for now, and we'll do it ourselves on the raw data instead
+	SCR_WritePNGFile(filename, raw_data, width, height, channels, false);
+	free(raw_data);
+}
+
+#else
+#define SCREENSHOT_EXT "tga"
+#define SCREENSHOT_ERROR_STRING "SCR_ScreenShot_f: Couldn't create a PCX file\n"
+// Yes, this is wrong! However, PCX was how it was written in the original code, so it's staying
+
+#endif /* SOFTQUAKE_ENABLE_PNG */
+
+/* 
+================== 
+SCR_ScreenShot_f
+================== 
+*/  
+void SCR_ScreenShot_f (void) 
+{
+	char		filename[80]; 
+	int			i;
+// 
+// find a file name to save it to 
+// 
+	if(!SCR_CheckAvailableName(filename, SCREENSHOT_EXT))
+	{
+		Con_Printf (SCREENSHOT_ERROR_STRING);
+		return;
+	}
+#ifdef SOFTQUAKE_ENABLE_PNG
+	WritePNGfile(filename);
+#else
+	WriteTGAfile(filename);
+#endif
 } 
 
 

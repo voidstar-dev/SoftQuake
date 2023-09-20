@@ -9,6 +9,7 @@ snd_src = []
 in_src = []
 main_src = []
 sys_src = []
+image_src = []
 defines = []
 cflags = []
 gl_cflags = []
@@ -132,6 +133,11 @@ shared_src = [
   'zone.c',
 ]
 
+# -------------- Build options --------------
+# I tried sticking them into a meson_options.txt file to do things the 'right way',
+# but the current version does not check for changes to this file, meaning options are only ever set on the first run.
+# I guess the intended use was to provide a command-line interface for options, rather than editing the text directly.
+
 # Various GLQuake fixes
 # Please read softquake-notes.txt to learn about what they do.
 # If you do enable these fixes, I recommend keeping them even in the software build.
@@ -142,6 +148,17 @@ ENABLE_GL_LIGHTMAP_FIX		= 0
 ENABLE_GL_TEXTUREMODE_FIX	= 0
 ENABLE_GL_CLEARCOLOR_FIX	= 0
 ENABLE_GL_UI_SCALING_FIX	= 0
+
+# Audio
+ENABLE_SOUND	  = 1	# Sound effects
+ENABLE_CD_AUDIO	  = 1	# Background music
+
+# Image
+# Use the PNG file format for screenshots
+# Otherwise uses PCX for softquake, and TGA for glquake
+ENABLE_PNG		  = 0
+
+
 
 if ENABLE_GL_FULLBRIGHT_FIX == 1
   defines += '-DSOFTQUAKE_GL_FULLBRIGHT_FIX'
@@ -164,10 +181,6 @@ if ENABLE_GL_UI_SCALING_FIX == 1
 endif
 
 
-# Audio
-ENABLE_SOUND	  = 1	# Sound effects
-ENABLE_CD_AUDIO	  = 1	# Background music
-
 if ENABLE_SOUND == 1
   snd_src += 'snd_sdl.c'
   snd_src += 'snd_dma_sdl.c'
@@ -185,7 +198,12 @@ else
   snd_src += 'cd_null.c'
 endif
 
+if ENABLE_PNG == 1
+  defines += '-DSOFTQUAKE_ENABLE_PNG'
+  image_src += 'stb_image_write.c'
+endif
 
+image_src += 'scr_screenshot.c'
 
 # Render target specifics
 sw_src += 'vid_sdl2.c'
@@ -256,7 +274,7 @@ cflags += '-m32' # 32 bit compile
 # cflags += '-mstackrealign'
 
 cflags += '-O2'
-cflags += '-g3'
+# cflags += '-g3'
 cflags += warnings_to_ignore
 
 gl_cflags += '-ffast-math'
@@ -264,27 +282,12 @@ gl_cflags += '-DGLQUAKE'
 
 ldflags += ['-m32'] # 32 bit compile
 
-gl_src += shared_src + main_src + in_src + sys_src + snd_src
-sw_src += shared_src + main_src + in_src + sys_src + snd_src
-
+common_src = shared_src + main_src + in_src + sys_src + snd_src + image_src
+gl_src += common_src
+sw_src += common_src
 
 local_libs = files(libs_to_copy)
 install_data(local_libs, install_dir: bin_dir)
-
-if true
-executable('glquake-sdl',
-  gl_src,
-  c_args: [cflags, gl_cflags],
-
-  link_args: [ldflags, libs],
-  build_rpath: rpath,
-  include_directories: includes,
-  install_dir: bin_dir,
-  install: true,
-  install_rpath: '.',
-  name_suffix: exe_suffix,
-  dependencies: [deps, gl_deps])
-endif
 
 if true
 executable('softquake-sdl',
@@ -299,4 +302,19 @@ executable('softquake-sdl',
   install_rpath: '.',
   name_suffix: exe_suffix,
   dependencies: deps)
+endif
+
+if true
+executable('glquake-sdl',
+  gl_src,
+  c_args: [cflags, gl_cflags],
+
+  link_args: [ldflags, libs],
+  build_rpath: rpath,
+  include_directories: includes,
+  install_dir: bin_dir,
+  install: true,
+  install_rpath: '.',
+  name_suffix: exe_suffix,
+  dependencies: [deps, gl_deps])
 endif

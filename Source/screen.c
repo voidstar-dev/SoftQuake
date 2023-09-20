@@ -604,6 +604,46 @@ void WritePCXfile (char *filename, byte *data, int width, int height,
 } 
  
 
+#ifdef SOFTQUAKE_ENABLE_PNG
+#define SCREENSHOT_EXT "png"
+#define SCREENSHOT_ERROR_STRING "SCR_ScreenShot_f: Couldn't create a PNG file\n"
+
+static void WritePNGfile (char *filename, byte *data, int width, int height,
+	int rowbytes, byte *palette)
+{
+	int channels = 3;
+	int image_size = width * height;
+	int image_bytes = image_size * channels;
+	unsigned char *raw_data = 0;
+	int data_index = 0;
+	int i;
+
+	raw_data = malloc(image_bytes);
+	q_assert(raw_data);
+
+	// The pixel format is already in RGB, exactly how we want it
+	for(i = 0; i < image_size; i++)
+	{
+		int palette_index = data[i] * 3;
+
+		raw_data[data_index + 0] = palette[palette_index + 0];
+		raw_data[data_index + 1] = palette[palette_index + 1];
+		raw_data[data_index + 2] = palette[palette_index + 2];
+
+		data_index += 3;
+	}
+
+	SCR_WritePNGFile(filename, raw_data, width, height, channels, false);
+
+	free(raw_data);
+}
+
+#else
+#define SCREENSHOT_EXT "pcx"
+#define SCREENSHOT_ERROR_STRING "SCR_ScreenShot_f: Couldn't create a PCX file\n"
+
+#endif /* SOFTQUAKE_ENABLE_PNG */
+
 
 /* 
 ================== 
@@ -613,41 +653,33 @@ SCR_ScreenShot_f
 void SCR_ScreenShot_f (void) 
 { 
 	int     i; 
-	char		pcxname[80]; 
-	char		checkname[MAX_OSPATH];
+	char		filename[80];
 
 // 
 // find a file name to save it to 
 // 
-	strcpy(pcxname,"quake00.pcx");
-		
-	for (i=0 ; i<=99 ; i++) 
-	{ 
-		pcxname[5] = i/10 + '0'; 
-		pcxname[6] = i%10 + '0'; 
-		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
-		if (Sys_FileTime(checkname) == -1)
-			break;	// file doesn't exist
-	} 
-	if (i==100) 
+	if(!SCR_CheckAvailableName(filename, SCREENSHOT_EXT))
 	{
-		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n"); 
+		Con_Printf (SCREENSHOT_ERROR_STRING);
 		return;
- 	}
+	}
 
 // 
 // save the pcx file 
 // 
 	D_EnableBackBufferAccess ();	// enable direct drawing of console to back
 									//  buffer
-
-	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes,
+#ifdef SOFTQUAKE_ENABLE_PNG
+	WritePNGfile (filename, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
+#else
+	WritePCXfile (filename, vid.buffer, vid.width, vid.height, vid.rowbytes,
 				  host_basepal);
+#endif
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									//  for linear writes all the time
 
-	Con_Printf ("Wrote %s\n", pcxname);
+	Con_Printf ("Wrote %s\n", filename);
 } 
 
 

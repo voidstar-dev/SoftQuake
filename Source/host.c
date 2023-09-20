@@ -81,6 +81,7 @@ cvar_t	pausable = {"pausable","1"};
 
 cvar_t	temp1 = {"temp1","0"};
 
+cvar_t host_maxfps = {"host_maxfps", "72", true};
 
 /*
 ================
@@ -229,6 +230,9 @@ void Host_InitLocal (void)
 	Cvar_RegisterVariable (&pausable);
 
 	Cvar_RegisterVariable (&temp1);
+
+	// softquake -- Add host_maxfps. Host frame rate limiter
+	Cvar_RegisterVariable (&host_maxfps);
 
 	Host_FindMaxClients ();
 	
@@ -501,9 +505,10 @@ Returns false if the time is too short to run a frame
 */
 qboolean Host_FilterTime (float time)
 {
+	double maxfps = Q_clamp(host_maxfps.value, 10.0, 1000.0);
 	realtime += time;
 
-	if (!cls.timedemo && realtime - oldrealtime < 1.0/72.0)
+	if (!cls.timedemo && realtime - oldrealtime < 1.0/maxfps)
 		return false;		// framerate is too high
 
 	host_frametime = realtime - oldrealtime;

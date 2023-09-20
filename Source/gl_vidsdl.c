@@ -400,7 +400,6 @@ void VID_SetPalette(unsigned char *palette)
 	int		j,k,l,m;
 	unsigned short i;
 	unsigned	*table;
-	FILE *f;
 	char s[255];
 	int dist, bestdist;
 

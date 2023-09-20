@@ -24,6 +24,7 @@ COMMON_OBJS += $(INPUT_OBJS)
 COMMON_OBJS += $(SND_OBJS)
 COMMON_OBJS += $(MAIN_OBJS)
 COMMON_OBJS += $(SYS_OBJS)
+COMMON_OBJS += $(IMAGE_OBJS)
 
 GL_OBJS =
 GL_OBJS += $(R_GL_OBJS) 
@@ -35,7 +36,7 @@ SW_OBJS += $(R_SW_OBJS)
 SW_OBJS += vid_sdl2.o
 SW_OBJS += $(COMMON_OBJS)
 
-# Since this file is should be recursively called, targets are defaulted to 0
+# Since this file should be recursively called, targets are defaulted to 0
 TARGET_SOFTQUAKE ?= 0
 TARGET_GLQUAKE ?= 0
 
@@ -75,7 +76,6 @@ ifeq ($(TARGET_SOFTQUAKE),1)
 	TARGET=$(BIN_DIR)/softquake-sdl$(EXE_SUFFIX)
 endif
 
-
 LDFLAGS ?=
 BIN_DIR=bin
 
@@ -91,7 +91,8 @@ $(TARGET): $(OBJS) $(BIN_DIR)
 
 # Thanks doomgeneric, I had no idea about this syntax
 # They are called "Order Only Prerequisites" by GNU Make
-$(OBJS): | $(OBJ_DIR)
+# Add pch file here to avoid race condition
+$(OBJS): | $(OBJ_DIR) pch
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
@@ -102,8 +103,16 @@ $(BIN_DIR):
 $(OBJ_DIR)/%.o: %.c
 	$(CC) -c $< -o $@ $(DEFINES) $(INCLUDE) $(CFLAGS)
 
+# Add precompiled header
+# This doesn't help the Linux build much, but does wonders for the win32 cross-compiled build
+# It's almost 2x faster now
+# I'm guessing it's the SDL2 headers (which in turn probably include windows.h) that are causing the huge slowdown
+pch:
+	$(CC) quakedef.h $(DEFINES) $(INCLUDE) $(CFLAGS)
 
-.PHONY: clean1
+
+.PHONY: clean1 pch
 
 clean1:
 	rm $(OBJ_DIR)/*.o
+	rm *.gch

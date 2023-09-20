@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Inspired by Quakespasm's version method
 
 #define SOFTQUAKE_VERSION_MAJOR 1
-#define SOFTQUAKE_VERSION_MINOR 0
+#define SOFTQUAKE_VERSION_MINOR 1
 #define SOFTQUAKE_VERSION_PATCH 0
 
 #define SQ_STRING1(x) #x

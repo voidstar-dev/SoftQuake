@@ -86,6 +86,7 @@ void InsertLinkAfter (link_t *l, link_t *after);
 
 // softquake -- Add generic assert
 // #define q_assert SDL_assert
+#include <assert.h>
 #define q_assert assert
 
 //============================================================================

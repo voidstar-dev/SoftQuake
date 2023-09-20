@@ -21,10 +21,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#if defined _WIN32
-#include "winquake.h"
-#else
+// softquake -- remove winquake.h include
+// windows.h is included on its own
+#if !defined _WIN32
 #define DWORD	unsigned long
+#else
+#include "windows_lean_and_mean.h"
 #endif
 
 #define	PAINTBUFFER_SIZE	512

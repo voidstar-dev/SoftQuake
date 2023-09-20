@@ -1,0 +1,17 @@
+# Not used, just keeping this in hopes of meson recognizing changes to this file one day.
+option('ENABLE_GL_FULLBRIGHT_FIX',	type: 'integer',  value: 0)
+option('ENABLE_GL_FULLBRIGHT_FIX',	type: 'integer',  value: 0)
+option('ENABLE_GL_LIGHTMAP_FIX',	type: 'integer',  value: 0)
+option('ENABLE_GL_TEXTUREMODE_FIX',	type: 'integer',  value: 0)
+option('ENABLE_GL_CLEARCOLOR_FIX',	type: 'integer',  value: 0)
+option('ENABLE_GL_UI_SCALING_FIX',	type: 'integer',  value: 0)
+
+# Audio
+option('ENABLE_SOUND',	  type: 'integer',	value: 1)	# Sound effects
+option('ENABLE_CD_AUDIO', type: 'integer',	value: 1)	# Background music
+
+
+# Image
+# Use the PNG file format for screenshots
+# Otherwise uses PCX for softquake, and TGA for glquake
+option('ENABLE_PNG',	  type: 'integer',	value: 1)

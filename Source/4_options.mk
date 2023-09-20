@@ -1,19 +1,23 @@
-# Emulated CD Audio. Requires SD2_mixer
+# Emulated CD Audio. Requires SDL2_mixer
 ENABLE_CD_AUDIO := 1
 
 # Sound effects
 ENABLE_SOUND := 1
+
+# PNG screenshots
+# By default, softquake uses PCX, glquake uses TGA
+ENABLE_PNG := 0
 
 # -----------------------------------------
 # GLQuake fixes
 # Disable all of these to match the original GLQuake release
 # Please see softquake-notes.txt for more info
 # -----------------------------------------
-ENABLE_GL_LIGHTMAP_FIX 		= 0
-ENABLE_GL_FULLBRIGHT_FIX 	= 0
-ENABLE_GL_TEXTUREMODE_FIX 	= 0
-ENABLE_GL_CLEARCOLOR_FIX 	= 0
-ENABLE_GL_UI_SCALING_FIX 	= 0
+ENABLE_GL_LIGHTMAP_FIX 		:= 0
+ENABLE_GL_FULLBRIGHT_FIX 	:= 0
+ENABLE_GL_TEXTUREMODE_FIX 	:= 0
+ENABLE_GL_CLEARCOLOR_FIX 	:= 0
+ENABLE_GL_UI_SCALING_FIX 	:= 0
 
 ifeq ($(ENABLE_GL_FULLBRIGHT_FIX),1)
 	DEFINES += -DSOFTQUAKE_GL_FULLBRIGHT_FIX
@@ -52,4 +56,10 @@ ifeq ($(ENABLE_CD_AUDIO),1)
 	SDL_DEPS += $(LIB_BASE)/$(libSDL2_mixer)
 else
 	SND_OBJS += cd_null.o
+endif
+
+# Screenshots
+ifeq ($(ENABLE_PNG),1)
+	IMAGE_OBJS += stb_image_write.o
+	DEFINES += -DSOFTQUAKE_ENABLE_PNG
 endif

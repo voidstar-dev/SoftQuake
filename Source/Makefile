@@ -2,6 +2,12 @@
 # Note: One must use the $(MAKE) builtin variable to pass arguments to recursive invokations of make
 
 .PHONY: softquake glquake clean help
+
+# Only run one target at a time
+# Currently this is to prevent dependency issues with precompiled headers
+# The targets themselves 'can' be parallelized
+.NOTPARALLEL: all
+
 all: softquake glquake
 
 softquake:
@@ -11,7 +17,7 @@ glquake:
 	$(MAKE) -f 5_recipe.mk TARGET_GLQUAKE=1
 
 clean:
-	$(MAKE) -f 5_recipe.mk TARGET_SOFTQUAKE=1 clean1
+	$(MAKE) -f 5_recipe.mk TARGET_SOFTQUAKE=1 clean1; \
 	$(MAKE) -f 5_recipe.mk TARGET_GLQUAKE=1 clean1
 
 help:

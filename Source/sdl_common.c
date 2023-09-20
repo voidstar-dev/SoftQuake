@@ -52,6 +52,26 @@ void VID_Vsync_cb(cvar_t *var)
 	VID_SetVsync(var->value);
 }
 
+
+qboolean VID_BackendIsValid(void)
+{
+	if(Q_strcmp("sdl", sw_backend.string) == 0) return true;
+	if(Q_strcmp("ogl", sw_backend.string) == 0) return true;
+	return false;
+}
+
+
+void CheckBackend(void)
+{
+	if(!VID_BackendIsValid())
+	{
+		Con_Printf("Error: %s is not a valid backend\n");
+		Con_Printf("SDL will be used on the next restart\n");
+		Cvar_SetStringQuick(&sw_backend, "sdl");
+		Con_Printf("sw_backend set to \"%s\"\n", sw_backend.string);
+	}
+}
+
 void SW_Backend_f(void)
 {
 	if(Cmd_Argc() > 1)
@@ -59,11 +79,8 @@ void SW_Backend_f(void)
 		const char *s = Cmd_Argv(Cmd_Argc() - 1);
 		Cvar_SetStringQuick(&sw_backend, s);
 		Con_Printf("Rendering backend set to \"%s\"\n", s);
-#ifdef GLQUAKE
-		Con_Printf("This cvar has no effect in GLQuake\n");
-#else
 		Con_Printf("Requires a full restart to take effect\n");
-#endif
+		CheckBackend();
 	}
 	else
 	{
@@ -72,7 +89,12 @@ void SW_Backend_f(void)
 		Con_Printf("ogl    Use OpenGL to display the image\n");
 
 		Con_Printf("sw_backend is \"%s\"\n", sw_backend.string);
+		CheckBackend();
 	}
+
+#ifdef GLQUAKE
+		Con_Printf("This cvar has no effect in GLQuake\n");
+#endif
 }
 
 // static int windowed_width = 0;

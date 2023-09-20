@@ -1,4 +1,26 @@
 ========================
+*** 1.1.0
+*** 2023-09-20
+========================
+* Add PNG support for screenshots. Set ENABLE_PNG = 1 in `4_options.mk` or `meson.build` to enable.
+* Fix file handle leak in cd_sdl.c.
+* Add `host_maxfps` cvar. Defaults to 72 as in the original game. Set to lower values to emulate lower framerates.
+  Values above 72 may cause physics bugs.
+* Increase cd audio buffer size from 512 to 1024 bytes.
+* cd audio is no longer audible if the cvar `bgmvolume` is 0 when the game is launched.
+* Provide a better error message when using `sw_backend`.
+  Specifying an invalid video backend with `sw_backend` will now notify the player immediately, instead of on the next restart.
+  SDL2 will be used as a fallback, as before, except that now it will set the cvar to "sdl". Previously it did not.
+  `sw_backend` only affects the software renderer. GLQuake remains unaffected, but can still access this variable.
+* Add precompiled header to Makefile build. This speeds up the Windows build by almost 2x.
+  If you're compiling the game yourself, you may want to delete the header manually after building,
+  since it can take up quite a bit of disk space. In this build, the file is `quakedef.h.gch`
+  Otherwise, the file is removed as part of the clean target.
+* Fix `clean` target for Makefile. Now all targets are cleaned properly.
+* Implement D_BeginDirectRect in the software renderer.
+  This draws the loading icon in the top-right corner, just like in the DOS version.
+
+========================
 *** 1.0.0
 *** 2023-09-01
 ========================

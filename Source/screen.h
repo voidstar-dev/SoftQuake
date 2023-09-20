@@ -55,3 +55,8 @@ extern	int			scr_copyeverything;
 extern qboolean		block_drawing;
 
 void SCR_UpdateWholeScreen (void);
+
+
+// softquake -- New additions for shared screenshot code
+qboolean SCR_CheckAvailableName(char out_filename[80], const char *ext);
+void SCR_WritePNGFile(const char *filename, const void *data, int width, int height, int channels, qboolean flip);

@@ -32,10 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "d_local.h"
 
-#include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <stdint.h>
-#include <ctype.h>
 
 
 #include "sdl_common.h"
@@ -79,6 +77,27 @@ typedef enum
 	RENDER_BACKEND_OPENGL,
 } render_backend_t;
 
+// Implement D_BeginDirectRect as a command buffer
+typedef struct
+{
+	int x;
+	int y;
+	int width;
+	int height;
+	int size;
+	byte *bitmap;
+} direct_rect_command;
+
+// This should only load 24x24 pixel images at 1 byte per pixel,
+// so 1024 bytes per command is more than enough
+#define DIRECT_RECT_COMMAND_CAP 64
+#define DIRECT_RECT_MEMORY_CAP (1024 * DIRECT_RECT_COMMAND_CAP)
+direct_rect_command drect_commands[DIRECT_RECT_COMMAND_CAP] = {0};
+int drect_command_count = 0;
+u8 *drect_memory = 0;
+size_t drect_bytes_written = 0;
+
+
 /**********************************
 * Forward declarations
 **********************************/
@@ -88,8 +107,8 @@ static void VID_InitQuakeFramebuffer(void);
 static void VID_SetFramebufferMode(int width, int height);
 static void VID_SetColorMod(float r, float g, float b);
 void VID_ReallocateTexture(void);
-
 void VID_ColorMod_f();
+static void D_FlushDirectRect(void);
 
 
 /**********************************
@@ -719,8 +738,6 @@ void VID_Restart(void)
 	int Fullscreen = 0;
 	Uint32 FullscreenFlag = 0;
 	Uint32 WindowFlags = 0;
-	static int firsttime = 1;
-
 
 	VID_UnlockVariables();
 
@@ -1008,7 +1025,7 @@ void VID_ChooseBackend(void)
 	}
 
 	Con_Printf("Invalid backend chosen: %s\n", sw_backend.string);
-	Con_Printf("Defaulting to SDL");
+	Con_Printf("Defaulting to SDL2");
 	render_backend = RENDER_BACKEND_SDL;
 }
 
@@ -1094,6 +1111,8 @@ void VID_Init(unsigned char *palette)
 	IN_ActivateMouse();
 	VID_InitQuakeFramebuffer();
 	DefineVideoOptions();
+
+	drect_memory = malloc(DIRECT_RECT_MEMORY_CAP);
 
 	vid_first_time = false;
 }
@@ -1283,9 +1302,11 @@ void SW_InitBackend(void)
 {
 }
 
+
 void VID_Update(vrect_t *rects)
 {
-	int w, h;
+	D_FlushDirectRect();
+
 	switch(render_backend)
 	{
 		case RENDER_BACKEND_SDL:
@@ -1326,18 +1347,126 @@ void VID_Shutdown(void)
 
 
 
-
 /**********************************
 * Direct Rect
 **********************************/
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
 {
-	// direct drawing of the "accessing disk" icon isn't supported
+	// From vid_dos.c
+	if((width > 24) || (height > 24) || (width < 1) || (height < 1))
+	{
+		return;
+	}
+	if(width & 0x03)
+	{
+		return;
+	}
+#if 1
+	{
+	int bitmap_size = width * height;
+	u8 *drect_memory_dst = 0;
+	direct_rect_command *cmd = 0;
+	if(bitmap_size + drect_bytes_written >= DIRECT_RECT_MEMORY_CAP)
+	{
+		Con_DPrintf("DirectRect: Bitmap buffer overflow\n");
+		return;
+	}
+	if(drect_command_count >= DIRECT_RECT_COMMAND_CAP)
+	{
+		Con_DPrintf("DirectRect: Command buffer overflow\n");
+		return;
+	}
+	if(!vid_memory8)
+	{
+		return;
+	}
+	if(!drect_memory)
+	{
+		return;
+	}
+
+	// Implement DirectRect drawing as a command buffer
+	// The idea is that the game may draw over the icons with Draw_FadeScreen,
+	// and I want to guarantee that we draw over that effect.
+	// Maybe it's a non-issue, more testing is needed.
+
+	// Temporary: Only use the first slot, since we're only drawing once per frame anyway.
+
+	// Fix this if drawing more images!!!
+	drect_bytes_written = 0;
+	drect_memory_dst = &drect_memory[drect_bytes_written];
+
+	// Increment drect_bytes_written if this is changed
+
+	memcpy(drect_memory_dst, pbitmap, bitmap_size);
+	cmd = &drect_commands[0];
+	drect_command_count = 1;
+	cmd->x = x;
+	cmd->y = y;
+	cmd->width = width;
+	cmd->height = height;
+	cmd->size = bitmap_size;
+	cmd->bitmap = drect_memory_dst;
+	}
+#else
+	// This was probably meant to write to the VGA hardware
+	// Since we're writing to our own memory, check if its valid first
+	{
+	int dx, dy;
+	u8 *vram8 = vid_memory8;
+	if(!vram8) return;
+	for(dy = 0; dy < height; dy++)
+	{
+		int y_offset = dy + y;
+		for(dx = 0; dx < width; dx++)
+		{
+			int x_offset = dx + x;
+			int p = y_offset * quake_width + x_offset;
+			vram8[p] = *pbitmap;
+			pbitmap++;
+		}
+	}
+	}
+#endif
 }
 
 void D_EndDirectRect (int x, int y, int width, int height)
 {
-	// direct drawing of the "accessing disk" icon isn't supported
+	// Nothing to do
+}
+
+static void D_FlushDirectRect(void)
+{
+	u8 *vram8 = vid_memory8;
+	int i;
+
+	int cmd_count = drect_command_count;
+	drect_command_count = 0;
+	drect_bytes_written = 0;
+	if(!vram8) return;
+
+	for(i = 0; i < cmd_count; i++)
+	{
+		const direct_rect_command *cmd = &drect_commands[i];
+		int x = cmd->x;
+		int y = cmd->y;
+		int width = cmd->width;
+		int height = cmd->height;
+		byte *pbitmap = cmd->bitmap;
+		int dx, dy;
+		for(dy = 0; dy < height; dy++)
+		{
+			int y_base = dy + y;
+			int y_offset = y_base * quake_width;
+			for(dx = 0; dx < width; dx++)
+			{
+				int x_offset = dx + x;
+				int p = y_offset + x_offset;
+				vram8[p] = *pbitmap;
+				pbitmap++;
+			}
+		}
+	}
 }
 
 void VID_SetVsync(qboolean enable)

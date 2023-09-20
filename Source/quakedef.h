@@ -40,6 +40,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	GAMENAME	"id1"
 #endif
 
+// softquake -- include windows.h
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+// #include <windows.h>
+#endif
+
+// // softquake -- include SDL2
+// #include <SDL2/SDL.h>
+
+// Moved from console.c
+#ifdef NeXT
+#include <libc.h>
+#endif
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
+#include <fcntl.h>
+
 #include <math.h>
 #include <string.h>
 #include <stdarg.h>

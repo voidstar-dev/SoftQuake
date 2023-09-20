@@ -14,4 +14,5 @@ Source/vertool
 Source/current
 Source/.lastpatch.txt
 Source/.patchnotes.txt
+Source/*.gch
 Release/*

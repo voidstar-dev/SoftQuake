@@ -92,6 +92,9 @@ SHARED_OBJS = chase.o \
 # Input
 INPUT_OBJS = in_sdl.o
 
+# Screenshot
+IMAGE_OBJS = scr_screenshot.o
+
 # Main
 # Remove this if testing other sys files
 MAIN_OBJS = main_sdl.o

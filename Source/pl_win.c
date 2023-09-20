@@ -19,11 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
+#include "quakedef.h"
+#include "windows_lean_and_mean.h"
 
 // pl_win.c Helper for sys_sdl_win.c
 

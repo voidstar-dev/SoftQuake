@@ -102,6 +102,7 @@ There are a number of compile-time options available:
 
 * `ENABLE_CD_AUDIO`
 * `ENABLE_SOUND`
+* `ENABLE_PNG`
 * `ENABLE_GL_LIGHTMAP_FIX`
 * `ENABLE_GL_FULLBRIGHT_FIX`
 * `ENABLE_GL_TEXTUREMODE_FIX`

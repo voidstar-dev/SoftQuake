@@ -18,9 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include <SDL2/SDL.h>
 
 #include "quakedef.h"
-#include <SDL2/SDL.h>
 
 // From sys_* files
 extern char *basedir;

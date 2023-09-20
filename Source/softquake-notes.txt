@@ -252,6 +252,11 @@ cl_quitmessage     -- Toggles the type of quit message displayed before exiting 
                       1: DOS quit message.
                    -- Usage: cl_quitmessage <0, 1>.
 
+host_maxfps        -- Determines the in-game client frame rate.
+                   -- Defaults to 72. Capped between 10 and 1000.
+				      Experience the game just as if you had insufficient clock speed to run it :)
+                   -- Usage: host_maxfps <framerate>.
+
 
 ==============================================================
 *** New commands
@@ -341,7 +346,7 @@ However, this can easily be remedied by changing the shared library that the gam
 No recompilation is neeed in this case.
 
 I've included the source for SDL2_mixer 2.7.0 with this release,
-so you can compile you own configuration.
+so you can compile your own configuration.
 
 See 'cd_sdl.c' for the implementation.
 

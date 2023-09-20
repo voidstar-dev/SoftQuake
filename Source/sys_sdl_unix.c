@@ -420,7 +420,7 @@ void Sys_Sleep (void)
 {
 	SDL_Delay (1);
 }
-// Moved to sdl_main.c
+// Moved to main_sdl.c
 #if 0
 int main(int c, char **v)
 {
