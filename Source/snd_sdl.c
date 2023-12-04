@@ -63,7 +63,9 @@ static int NextPowerOfTwo(int n)
 	return n;
 }
 
-static void SND_AudioCallback(void *userdata, Uint8 *stream, int len)
+// Thanks to Ryan Gordon and his sdlamp series,
+// I've been made aware the SDLCALL is required for some compiler/OS combinations
+static void SDLCALL SND_AudioCallback(void *userdata, Uint8 *stream, int len)
 {
 	// Credits to Quakespasm for this circular buffer implementation
 	int	pos, tobufend;
@@ -211,7 +213,7 @@ qboolean SNDDMA_Init()
 	shm->speed = snd_config.speed;
 	shm->samplebits = snd_config.format & 0xFF; // SDL2 specifies that the lowest 8 bits contain the number of bits per sample
 
-	// Allocate enough buffer memory for 4 seconds of audio and make sure it is a power of 2
+	// Allocate enough buffer memory for 2 seconds of audio and make sure it is a power of 2
 	sdl_audio_buffer_size = NextPowerOfTwo(shm->speed * shm->channels * shm->samplebits * 2);
 	sdl_audio_buffer = malloc(sdl_audio_buffer_size);
 

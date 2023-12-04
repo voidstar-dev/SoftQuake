@@ -14,6 +14,7 @@ defines = []
 cflags = []
 gl_cflags = []
 warnings_to_ignore = []
+warnings = []
 libs = []
 libs_to_copy = []
 ldflags = []
@@ -260,7 +261,12 @@ else
   assert(false, 'Unsupported OS')
 endif
 
+warnings += '-Wformat'
+warnings += '-Werror'
+
 warnings_to_ignore += '-Wno-unknown-pragmas'
+warnings_to_ignore += '-Wno-dangling-else'
+warnings_to_ignore += '-Wno-pointer-sign'
 
 # Arch
 # Warning: Do NOT use -ffast math in the software renderer. It breaks some things in the code
@@ -275,6 +281,9 @@ cflags += '-m32' # 32 bit compile
 
 cflags += '-O2'
 # cflags += '-g3'
+
+# Warnings should be added first, then selectively disabled
+cflags += warnings
 cflags += warnings_to_ignore
 
 gl_cflags += '-ffast-math'

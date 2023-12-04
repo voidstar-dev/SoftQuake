@@ -76,6 +76,14 @@ ifeq ($(TARGET_SOFTQUAKE),1)
 	TARGET=$(BIN_DIR)/softquake-sdl$(EXE_SUFFIX)
 endif
 
+CFLAGS += -Wformat
+CFLAGS += -Wno-dangling-else
+CFLAGS += -Wno-pointer-sign
+
+# Leaving this as optional
+# Who knows what GCC will introduce as a default warning in the future
+# CFLAGS += -Werror
+
 LDFLAGS ?=
 BIN_DIR=bin
 

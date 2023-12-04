@@ -257,6 +257,10 @@ host_maxfps        -- Determines the in-game client frame rate.
 				      Experience the game just as if you had insufficient clock speed to run it :)
                    -- Usage: host_maxfps <framerate>.
 
+host_sleep         -- Determines whether the game should sleep after a frame. Currently hardcoded to 1 millisecond.
+                   -- Only sleeps if enabled and if the frame time is less than the target fps.
+                   -- Usage: host_sleep <0, 1>.
+
 
 ==============================================================
 *** New commands

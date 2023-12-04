@@ -636,6 +636,7 @@ void R_DrawEntitiesOnList (void)
 		case mod_sprite:
 			R_DrawSpriteModel (currententity);
 			break;
+		default:;
 		}
 	}
 }

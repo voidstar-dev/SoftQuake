@@ -48,9 +48,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // #include <windows.h>
 #endif
 
-// // softquake -- include SDL2
-// #include <SDL2/SDL.h>
-
 // Moved from console.c
 #ifdef NeXT
 #include <libc.h>
@@ -231,6 +228,10 @@ void	VID_UnlockBuffer (void);
 // Use for multiplayer testing only - VERY dangerous!!!
 // #define IDGODS
 
+// softquake -- New compiler feature flags
+// Must be included before any other local headers
+#include "cc_features.h"
+
 #include "common.h"
 #include "bspfile.h"
 #include "vid.h"
@@ -338,11 +339,11 @@ void Host_ServerFrame (void);
 void Host_InitCommands (void);
 void Host_Init (quakeparms_t *parms);
 void Host_Shutdown(void);
-void Host_Error (char *error, ...);
+PRINTF_FUNCTION void Host_Error (char *error, ...);
 void Host_EndGame (char *message, ...);
 void Host_Frame (float time);
 void Host_Quit_f (void);
-void Host_ClientCommands (char *fmt, ...);
+PRINTF_FUNCTION void Host_ClientCommands (char *fmt, ...);
 void Host_ShutdownServer (qboolean crash);
 
 extern qboolean		msg_suppress_1;		// suppresses resolution and cache size console output

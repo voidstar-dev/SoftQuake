@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // file IO
 //
 
+
 // returns the file size
 // return -1 if file is not present
 // the file should be in BINARY mode for stupid OSs that care
@@ -46,10 +47,10 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length);
 //
 void Sys_DebugLog(char *file, char *fmt, ...);
 
-void Sys_Error (char *error, ...);
+NORETURN_FUNCTION PRINTF_FUNCTION void Sys_Error (char *error, ...);
 // an error will cause the entire program to exit
 
-void Sys_Printf (char *fmt, ...);
+PRINTF_FUNCTION void Sys_Printf (char *fmt, ...);
 // send text to the console
 
 void Sys_Quit (void);

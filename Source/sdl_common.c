@@ -65,7 +65,7 @@ void CheckBackend(void)
 {
 	if(!VID_BackendIsValid())
 	{
-		Con_Printf("Error: %s is not a valid backend\n");
+		Con_Printf("Error: %s is not a valid backend\n", sw_backend.string);
 		Con_Printf("SDL will be used on the next restart\n");
 		Cvar_SetStringQuick(&sw_backend, "sdl");
 		Con_Printf("sw_backend set to \"%s\"\n", sw_backend.string);

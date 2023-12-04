@@ -157,6 +157,8 @@ typedef void (APIENTRY *pfn_glLoadIdentity) (void);
 typedef void (APIENTRY *pfn_glColor4f) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 typedef void (APIENTRY *pfn_glEnable) (GLenum cap);
 typedef void (APIENTRY *pfn_glDisable) (GLenum cap);
+typedef void (APIENTRY *pfn_glFrontFace) (GLenum mode);
+typedef void (APIENTRY *pfn_glGenTextures) (GLsizei n, const GLuint *textures);
 typedef void (APIENTRY *pfn_glDeleteTextures) (GLsizei n, const GLuint *textures);
 
 typedef void (APIENTRY *pfn_glTexSubImage2D) (GLenum target, GLint level,
@@ -216,6 +218,8 @@ VID_GL_INIT_FUNC(glLoadIdentity);
 VID_GL_INIT_FUNC(glColor4f);
 VID_GL_INIT_FUNC(glEnable);
 VID_GL_INIT_FUNC(glDisable);
+VID_GL_INIT_FUNC(glFrontFace);
+VID_GL_INIT_FUNC(glGenTextures);
 VID_GL_INIT_FUNC(glDeleteTextures);
 VID_GL_INIT_FUNC(glTexSubImage2D);
 VID_GL_INIT_FUNC(glTexImage2D);
@@ -356,12 +360,23 @@ static GLuint gl_loc_palette;
 static GLuint gl_shader_prog;
 static GLuint gl_texture;
 
+// softquake -- 2023-12-02
+// Turns out "varying in <varname>" and "varying out <varname>" is not valid GLSL
+// You must use either 'in/out' or 'varying', but not both
+
+// eg:
+// in vec3 pos;
+// varying vec3 pos;
+
+// Nvidia was just letting me get away with this
+// AMD's drivers wouldn't launch these shaders so I had to binary patch the executable and remove the 'in'/'out' keywords :)
+// This is fixed in the source code now
 
 // Just display the texture, nothing fancy
 static const char *gl_vertex_shader =
 "#version 110\n"
-"varying out vec2 vf_Texcoords;\n"
-"varying out vec4 vf_Color;\n"
+"varying vec2 vf_Texcoords;\n"
+"varying vec4 vf_Color;\n"
 "void main() {\n"
 	// "vec4 v = gl_Vertex\n;"
 	// "v.y *= -1.0\n;"
@@ -372,15 +387,17 @@ static const char *gl_vertex_shader =
 ;
 
 // Move the color lookup to the fragment shader
-// Todo: Use an integer texture? This will require using usampler2D instead of sampler2D
+
+// 2023-12-03 -- Add a 0.5 offset to the lookup value to compensate for rounding errors
+// This is based off of Sean Barett's talk on Megatextures.
 static const char *gl_fragment_shader =
 "#version 110\n"
 "uniform sampler2D Tex0;\n"
 "uniform vec3 palette[256];\n"
-"varying in vec2 vf_Texcoords;\n"
-"varying in vec4 vf_Color;\n"
+"varying vec2 vf_Texcoords;\n"
+"varying vec4 vf_Color;\n"
 "void main() {\n"
-	"int idx = int(texture2D(Tex0, vf_Texcoords).r * 255.0);\n"
+	"int idx = int(texture2D(Tex0, vf_Texcoords).r * 255.0 + 0.5);\n"
 	"vec4 c = vec4(palette[idx], 1) * vf_Color;\n"
 	"gl_FragColor = c;\n"
 "}\n"
@@ -403,6 +420,7 @@ GLuint GL_CompileShaderFromMemory(const char *Source, size_t Len, GLuint Type)
 			break;
 		case GL_FRAGMENT_SHADER:
 			ShaderString = "fragment";
+			break;
 		default:
 			ShaderString = "unknown";
 	}
@@ -474,6 +492,8 @@ static void GL_LoadExtensions(qboolean load_glsl)
 	VID_GL_LOAD_EXTENSION(glColor4f);
 	VID_GL_LOAD_EXTENSION(glEnable);
 	VID_GL_LOAD_EXTENSION(glDisable);
+	VID_GL_LOAD_EXTENSION(glFrontFace);
+	VID_GL_LOAD_EXTENSION(glGenTextures);
 	VID_GL_LOAD_EXTENSION(glDeleteTextures);
 	VID_GL_LOAD_EXTENSION(glTexSubImage2D);
 	VID_GL_LOAD_EXTENSION(glTexImage2D);
@@ -568,7 +588,7 @@ void GL_InitBackend(void)
 	{
 		qglEnable(GL_TEXTURE_2D);
 	}
-
+	qglGenTextures(1, &gl_texture);
 	qglBindTexture(GL_TEXTURE_2D, gl_texture);
 	GL_AllocateTexture();
 
@@ -580,7 +600,8 @@ void GL_InitBackend(void)
 
 	qglColor4f(1, 1, 1, 1);
 
-	qglDisable(GL_CULL_FACE);
+	qglEnable(GL_CULL_FACE);
+	qglFrontFace(GL_CCW);
 }
 
 void GL_ShutdownBackend(void)
@@ -1232,7 +1253,7 @@ void VID_SetPalette(unsigned char *palette)
 }
 
 // No indexed texture modes, just doing it directly in software
-static void CopyColormap8ToTexture32(void)
+static void CopyTexture8ToTexture32(void)
 {
 	int x, y;
 	int idx = 0;
@@ -1258,7 +1279,7 @@ static void CopyColormap8ToTexture32(void)
 
 void SW_Render(void)
 {
-	CopyColormap8ToTexture32();
+	CopyTexture8ToTexture32();
 
 	SDL_RenderClear(ctx.Renderer);
 	SDL_UpdateTexture(ctx.RenderTarget, 0, vid_memory32, vid.width * 4);
@@ -1276,7 +1297,7 @@ void GL_Render(void)
 	}
 	else
 	{
-		CopyColormap8ToTexture32();
+		CopyTexture8ToTexture32();
 		qglTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, quake_width, quake_height, GL_RGBA, GL_UNSIGNED_BYTE, vid_memory32);
 	}
 
@@ -1829,19 +1850,21 @@ void VID_MenuDraw(void)
 				VID_GetClientWindowDimensions(&w, &h);
 				info_text = va("Current window size: %dx%d", w, h);
 			}
-				break;
+			break;
 			case VID_OPT_FB_MODE:
 				info_text = "This is the in-game resolution";
-				break;
+			break;
 			case VID_OPT_MODESTATE:
 				if(GetStateIndexDefault(cur_option) == MS_FULLSCREEN)
 				{
 					info_text = "Note: Changes your desktop resolution";
 				}
-				break;
+			break;
 			case VID_OPT_TEST:
 				info_text = "Test this configuration for " q_stringify(VID_TEST_TIMEOUT) " seconds";
-				break;
+			break;
+			default:
+			; // nothing to do
 		}
 
 		if(info_text)

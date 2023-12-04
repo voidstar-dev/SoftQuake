@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // Check name availability in the gamedir path
 // Assumes that the name starts with "quake00"
-qboolean SCR_CheckAvailableName(char out_filename[80], const char *ext)
+qboolean SCR_CheckAvailableName(screenshot_filename *out_filename, const char *ext)
 {
 	char checkname[MAX_OSPATH];
 	int i;
@@ -35,13 +35,13 @@ qboolean SCR_CheckAvailableName(char out_filename[80], const char *ext)
 	// quake01.ext
 	// quake02.ext
 	// ...
-	sprintf(out_filename, "quake00.%s", ext);
+	q_snprintf(out_filename->buf, sizeof(out_filename->buf), "quake00.%s", ext);
 
 	for(i=0 ; i<=99 ; i++)
 	{
-		out_filename[5] = i/10 + '0';
-		out_filename[6] = i%10 + '0';
-		sprintf (checkname, "%s/%s", com_gamedir, out_filename);
+		out_filename->buf[5] = i/10 + '0';
+		out_filename->buf[6] = i%10 + '0';
+		q_snprintf (checkname, sizeof(checkname), "%s/%s", com_gamedir, out_filename->buf);
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	}

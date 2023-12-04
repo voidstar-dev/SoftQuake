@@ -582,7 +582,7 @@ void Host_Loadgame_f (void)
 
 	cls.demonum = -1;		// stop demo loop in case this fails
 
-	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+	q_snprintf (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
 	COM_DefaultExtension (name, ".sav");
 	
 // we can't call SCR_BeginLoadingPlaque, because too much stack space has

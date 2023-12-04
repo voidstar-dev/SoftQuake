@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL.h>
+
 
 
 // These are ordered in terms of precedence
@@ -159,6 +161,17 @@ static void LoadTrack(byte track)
 			}
 			if(cd_current_track.track) break;
 		}
+		else
+		{
+			// Check if the file exists at all and let the user know that the format is unsupported
+			int handle = -1;
+			int filesize = COM_FindFile(filename, &handle, 0);
+			if(filesize > 0 && handle != -1)
+			{
+				Con_Printf("Found track '%s', but the '.%s' format is unsupported in this build of SDL2_mixer\n", filename, fmt->extension);
+				Sys_FileClose(handle);
+			}
+		}
 	}
 
 	if(!cd_current_track.track)
@@ -292,37 +305,48 @@ int CDAudio_Init(void)
 	}
 
 	ObtainedFormats = Mix_Init(Formats);
+	const char *MixInitErrorString = Mix_GetError();
 	PrintMixVersion();
 	// Con_Printf("%x, %x\n", Formats, ObtainedFormats);
 
-	if(ObtainedFormats == 0)
-	{
-		// Could not open audio at all
-		Con_Printf("Could not initialize CD Audio: %s\n", SDL_GetError());
-		CDAudio_ShutdownLocal();
-		return 0;
-	}
-
 	// Todo: Audio format and frequency from shm (snd_sdl.c)
 	// Increased buffer size from 512 to 1024 bytes to accomodate higher frequency input files (tested at 96k hz)
-	if(Mix_OpenAudio(cd_freq, AUDIO_S16SYS, 2, cd_sample_bytes) != 0)
+	// softquake -- 2023-12-03: Now the audio device is opened with an explicit format
+	if(Mix_OpenAudioDevice(cd_freq, AUDIO_S16SYS, 2, cd_sample_bytes, 0, 0) != 0)
 	{
-		Con_Printf("Could not open CD Audio Mixer: %s\n", SDL_GetError());
+		Con_Printf("Could not open CD Audio Mixer: %s\n", Mix_GetError());
 		CDAudio_ShutdownLocal();
 		return 0;
 	}
 
-	Con_Printf("CD Audio frequency   : %d Hz\n", cd_freq);
-	Con_Printf("CD Audio buffer size : %d bytes\n", cd_sample_bytes);
+	Uint16 format_got;
+	int freq_got, channels_got;
+	Mix_QuerySpec(&freq_got, &format_got, &channels_got);
 
+	Con_Printf("CD Audio frequency req : %d Hz\n", cd_freq);
+	Con_Printf("CD Audio frequency got : %d Hz\n", freq_got);
+	Con_Printf("CD Audio buffer size   : %d bytes\n", cd_sample_bytes);
 
 	// Set the enabled flag explicitly
 	for(i = 0; i < CD_AUDIO_FMT_COUNT; i++)
 	{
 		cd_audio_formats[i].enabled = (ObtainedFormats & cd_audio_formats[i].format_mask) != 0;
 	}
-	// We assume that WAV is always supported
-	cd_audio_formats[CD_AUDIO_FMT_WAV].enabled = 1;
+	// We 'no longer' assume that WAV is always supported
+	// Hopefully this string is portable
+	int have_wave = Mix_HasMusicDecoder("WAVE");
+	cd_audio_formats[CD_AUDIO_FMT_WAV].enabled = have_wave;
+
+	// This is now checked after calling Mix_OpenAudioDevice, which is required to be called
+	// before calling Mix_HasMusicDecoder
+	// Since there's no bitflag for WAVE support, I explicitly check the presence of a decoder instead.
+	// Of course wave isn't an ideal music format in terms of space, but it's a good fallback
+	if(ObtainedFormats == 0 && !have_wave)
+	{
+		Con_Printf("Opened mixer, but no audio formats are supported: %s\n", MixInitErrorString);
+		CDAudio_ShutdownLocal();
+		return 0;
+	}
 
 	if(Formats != ObtainedFormats)
 	{

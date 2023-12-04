@@ -653,12 +653,12 @@ SCR_ScreenShot_f
 void SCR_ScreenShot_f (void) 
 { 
 	int     i; 
-	char		filename[80];
+	screenshot_filename		filename;
 
 // 
 // find a file name to save it to 
 // 
-	if(!SCR_CheckAvailableName(filename, SCREENSHOT_EXT))
+	if(!SCR_CheckAvailableName(&filename, SCREENSHOT_EXT))
 	{
 		Con_Printf (SCREENSHOT_ERROR_STRING);
 		return;
@@ -670,16 +670,16 @@ void SCR_ScreenShot_f (void)
 	D_EnableBackBufferAccess ();	// enable direct drawing of console to back
 									//  buffer
 #ifdef SOFTQUAKE_ENABLE_PNG
-	WritePNGfile (filename, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
+	WritePNGfile (filename.buf, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
 #else
-	WritePCXfile (filename, vid.buffer, vid.width, vid.height, vid.rowbytes,
+	WritePCXfile (filename.buf, vid.buffer, vid.width, vid.height, vid.rowbytes,
 				  host_basepal);
 #endif
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									//  for linear writes all the time
 
-	Con_Printf ("Wrote %s\n", filename);
+	Con_Printf ("Wrote %s\n", filename.buf);
 } 
 
 

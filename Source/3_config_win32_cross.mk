@@ -5,7 +5,7 @@
 # Sean Barret mentioned this in his stb_image.h file, not sure if this is still relevant in 2023
 # It's something to do with mingw Windows cross-compilation and sse2 being enabled
 # https://github.com/nothings/stb/issues/81
-CFLAGS = -fcommon -m32 -mconsole -O2 -march=native
+CFLAGS = -fcommon -m32 -O2 -march=native
 # CFLAGS += -mfpmath=sse -mstackrealign
 
 LIB_BASE = thirdparty/lib/win32/x86
@@ -14,7 +14,7 @@ SDL_DEPS = $(LIB_BASE)/SDL2.dll
 
 libSDL2_mixer = SDL2_mixer.dll
 
-LIBS += -lwinmm -l:SDL2.lib -l:SDL2main.lib -l:SDL2.dll
+LIBS += -lwinmm -lSDL2main -lSDL2
 GL_LIBS = -lopengl32
 
 # Sys

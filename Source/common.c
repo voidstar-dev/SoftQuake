@@ -433,6 +433,8 @@ float Q_atof (char *str)
 #define	vsnprintf_func		vsnprintf
 #endif
 
+
+
 int q_vsnprintf(char *str, size_t size, const char *format, va_list args)
 {
 	int		ret;
@@ -448,6 +450,7 @@ int q_vsnprintf(char *str, size_t size, const char *format, va_list args)
 
 	return ret;
 }
+
 
 int q_snprintf (char *str, size_t size, const char *format, ...)
 {
@@ -900,7 +903,11 @@ void COM_FileBase (char *in, char *out)
 	while (s != in && *s != '.')
 		s--;
 	
-	for (s2 = s ; *s2 && *s2 != '/' ; s2--)
+	// softquake -- Fix buffer underflow
+	// s2 is never checked to have gone below the address of 'in'
+	// When compiling with gcc, I guess there was a conveniently placed 0 in memory
+	// Not the case with clang
+	for (s2 = s ; *s2 && *s2 != '/' && (s2 != in /* fix */); s2--)
 	;
 	
 	if (s-s2 < 2)
@@ -1321,7 +1328,7 @@ void COM_WriteFile (char *filename, void *data, int len)
 	int             handle;
 	char    name[MAX_OSPATH];
 	
-	sprintf (name, "%s/%s", com_gamedir, filename);
+	q_snprintf (name, sizeof(name), "%s/%s", com_gamedir, filename);
 
 	handle = Sys_FileOpenWrite (name);
 	if (handle == -1)
@@ -1460,7 +1467,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 					continue;
 			}
 			
-			sprintf (netpath, "%s/%s",search->filename, filename);
+			q_snprintf (netpath, sizeof(netpath), "%s/%s",search->filename, filename);
 			
 			findtime = Sys_FileTime (netpath);
 			if (findtime == -1)
@@ -1477,7 +1484,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 				else
 					sprintf (cachepath,"%s%s", com_cachedir, netpath+2);
 #else
-				sprintf (cachepath,"%s%s", com_cachedir, netpath);
+				q_snprintf (cachepath, sizeof(cachepath), "%s%s", com_cachedir, netpath);
 #endif
 
 				cachetime = Sys_FileTime (cachepath);

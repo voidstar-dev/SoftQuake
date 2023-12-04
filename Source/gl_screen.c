@@ -697,20 +697,20 @@ SCR_ScreenShot_f
 */  
 void SCR_ScreenShot_f (void) 
 {
-	char		filename[80]; 
+	screenshot_filename filename;
 	int			i;
 // 
 // find a file name to save it to 
 // 
-	if(!SCR_CheckAvailableName(filename, SCREENSHOT_EXT))
+	if(!SCR_CheckAvailableName(&filename, SCREENSHOT_EXT))
 	{
 		Con_Printf (SCREENSHOT_ERROR_STRING);
 		return;
 	}
 #ifdef SOFTQUAKE_ENABLE_PNG
-	WritePNGfile(filename);
+	WritePNGfile(filename.buf);
 #else
-	WriteTGAfile(filename);
+	WriteTGAfile(filename.buf);
 #endif
 } 
 

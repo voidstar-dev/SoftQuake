@@ -82,6 +82,7 @@ cvar_t	pausable = {"pausable","1"};
 cvar_t	temp1 = {"temp1","0"};
 
 cvar_t host_maxfps = {"host_maxfps", "72", true};
+cvar_t host_sleep = {"host_sleep", "1", true};
 
 /*
 ================
@@ -233,6 +234,10 @@ void Host_InitLocal (void)
 
 	// softquake -- Add host_maxfps. Host frame rate limiter
 	Cvar_RegisterVariable (&host_maxfps);
+
+	// softquake -- Add host_sleep. Sleeps for some duration (currently 1 ms) after each frame
+	// See main_sdl.c
+	Cvar_RegisterVariable (&host_sleep);
 
 	Host_FindMaxClients ();
 	

@@ -30,6 +30,9 @@ void Sys_Init(void);
 // From vid
 extern cvar_t vid_vsync;
 
+// From host
+extern cvar_t host_sleep;
+
 static void PrintSDLVersion(void)
 {
 	SDL_version Compiled;
@@ -133,7 +136,7 @@ int main(int argc, char **argv)
 		// Borrowed from Quakespasm
 		// This will usually happen if vsync is off or the video system is set to a higher refresh rate than 60hz
 		// We don't want to hog the CPU in this case, so sleep a bit
-		if((time < Millis(20) && !cls.timedemo) && vid_vsync.value)
+		if((time < Millis(20) && !cls.timedemo) && (vid_vsync.value && host_sleep.value))
 		{
 			SDL_Delay(1);
 		}

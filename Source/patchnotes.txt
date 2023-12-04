@@ -1,4 +1,30 @@
 ========================
+*** 1.2.0
+*** 2023-12-04
+========================
+* Add -Wformat to the compiler flags.
+* Annotate printf style functions so that the compiler can catch formatting errors.
+  Replace some sprintf calls with q_snprintf.
+  Fix format string mismatches.
+* Add -Wno-dangling-else, -Wno-pointer-sign to the compiler flags.
+* Mix_OpenAudio has been replaced with Mix_OpenAudioDevice. This ensures that music files are played
+  with the requested format. Prior to this, the implementation was free to modify the format.
+  SDL will convert the requested audio format under the hood to what the OS expects.
+* No longer assume WAVE file support. This is now checked at runtime with Mix_HasMusicDecoder().
+* No longer disable music playback if Mix_Init() returns 0. At the very least, support for a wave decoder is checked.
+* Give a more informative error message if an audio track for an unsupported format is found.
+* Fix buffer underflow in COM_FileBase. When compiling with Clang under Linux, the program would crash upon loading a new level.
+  This was caused by an unchecked pointer decrement.
+  With this fix, you can now compile the Linux build with Clang without crashing the game. Just call `make` with `CC=clang`.
+* Change main Windows Makefile flags to use regular `-l` for library linking.
+* Add `host_sleep` cvar. Defaults to 1. This sleeps the game for 1 millisecond after each frame. Set to 0 to disable.
+* Fix invalid GLSL syntax in the vertex and fragment shaders.
+  Nvidia's drivers were accepting the shaders as they were written originally, whereas AMD's drivers were not.
+  `varying in` and `varying out` have been changed to just `varying`.
+* Add glGenTextures call for the OpenGL software backend.
+* Misc formatting and typo fixes.
+
+========================
 *** 1.1.0
 *** 2023-09-20
 ========================
@@ -27,7 +53,7 @@
 * Initial release
 * Binary releases are available in the release section of the repository
   Players can use two versions of the game:
-  
+
   softquake-sdl
   glquake-sdl
 

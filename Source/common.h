@@ -144,7 +144,7 @@ float Q_atof (char *str);
 
 // softquake -- Add bounded sprint functions
 int q_vsnprintf(char *str, size_t size, const char *format, va_list args);
-int q_snprintf (char *str, size_t size, const char *format, ...);
+SNPRINTF_FUNCTION int q_snprintf (char *str, size_t size, const char *format, ...);
 
 //============================================================================
 
@@ -167,7 +167,7 @@ void COM_FileBase (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
 int COM_FindFile (char *filename, int *handle, FILE **file); // softquake -- Add COM_FindFile
 
-char	*va(char *format, ...);
+PRINTF_FUNCTION char *va(char *format, ...);
 // does a varargs printf into a temp buffer
 
 

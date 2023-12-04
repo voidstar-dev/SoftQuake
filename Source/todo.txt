@@ -1,5 +1,5 @@
--- Be aspect ratio correct.
--- Resizable window (up for debate, just have to uncomment SDL_SetWindowResizable).
+-- Be aspect ratio correct. Probably black bars with glViewport or setting the destination rect in SDL_RenderCopyEx
+   When in regular fullscreen mode, some monitors will put up black bars on their own, so maybe just limit it to windowed
+   and borderless modes.
+-- Resizable window.
 -- Video options menu in glquake.
--- Screenshots in a modern format. Currently screenshots are saved as .pcx and .tga files respectively for softquake and glquake.
-   Should be easy enough to implement with stb_image, if people request it.

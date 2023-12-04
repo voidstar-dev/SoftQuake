@@ -1213,7 +1213,8 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 
 		if (i < mod->numsubmodels-1)
 		{	// duplicate the basic information
-			char	name[10];
+			// softquake -- Address compiler warning. name[] was 10 bytes before.
+			char	name[16];
 
 			sprintf (name, "*%i", i+1);
 			loadmodel = Mod_FindName (name);
